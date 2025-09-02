@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  linebot:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: linebot-rs
+    ports:
+      - "3000:3000"
+    environment:
+      - CHANNEL_ACCESS_TOKEN=${CHANNEL_ACCESS_TOKEN}
+      - CHANNEL_SECRET=${CHANNEL_SECRET}
+      - PORT=3000
+      - HOST=0.0.0.0
+      - RUST_LOG=info
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - linebot-network
+
+  # Optional: Add nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: linebot-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - linebot
+    restart: unless-stopped
+    networks:
+      - linebot-network
+    profiles:
+      - with-proxy
+
+  # Optional: Add Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: linebot-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - linebot-network
+    profiles:
+      - with-cache
+
+networks:
+  linebot-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local

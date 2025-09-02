@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  linebot-dev:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: builder  # Only build stage for development
+    container_name: linebot-rs-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - CHANNEL_ACCESS_TOKEN=${CHANNEL_ACCESS_TOKEN:-test_token}
+      - CHANNEL_SECRET=${CHANNEL_SECRET:-test_secret}
+      - PORT=3000
+      - HOST=0.0.0.0
+      - RUST_LOG=debug
+    volumes:
+      - .:/app:ro
+      - target_cache:/app/target
+    working_dir: /app
+    command: ["cargo", "run"]
+    restart: unless-stopped
+    networks:
+      - linebot-dev-network
+
+  # Development database (optional)
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: linebot-postgres-dev
+    environment:
+      - POSTGRES_DB=linebot_dev
+      - POSTGRES_USER=linebot
+      - POSTGRES_PASSWORD=linebot_dev_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - linebot-dev-network
+    profiles:
+      - with-db
+
+  # Development Redis (optional)
+  redis-dev:
+    image: redis:7-alpine
+    container_name: linebot-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - linebot-dev-network
+    profiles:
+      - with-cache
+
+networks:
+  linebot-dev-network:
+    driver: bridge
+
+volumes:
+  target_cache:
+    driver: local
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local

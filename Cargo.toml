@@ -1,0 +1,32 @@
+[package]
+name = "linebot-rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+axum = "0.7"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.11", features = ["json"] }
+sha2 = "0.10"
+hmac = "0.12"
+dotenvy = "0.15"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+base64 = "0.21"
+chrono = { version = "0.4", features = ["serde"] }
+async-trait = "0.1"
+dashmap = "5.5"
+tokio-util = "0.7"
+metrics = "0.22"
+metrics-exporter-prometheus = { version = "0.13", optional = true }
+
+[features]
+default = []
+metrics = ["dep:metrics-exporter-prometheus"]
+
+[dev-dependencies]
+tower = { version = "0.4", features = ["util"] }
